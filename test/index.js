@@ -60,13 +60,13 @@ describe("Sequence", function() {
       expect(tsk2.args).toEqual(jasmine.any(Array));
     });
 
-    it("Task.prototype.addDependency()", function() {
+    it("Task.prototype.addDep()", function() {
       var deps = tsk1.dependencies, depsI = tsk1.depIndecees;
-      tsk1.addDependency(dep1 = mock.dep1Fn, 1);
+      tsk1.addDep(dep1 = mock.dep1Fn, 1);
       expect(deps[0]).toEqual(jasmine.any(Function));
       expect(depsI[0]).toEqual(1);
       dep2 = mock.dep2Fn;
-      expect(tsk1.addDependency(mock.dep2Fn, 0)).toEqual(tsk1);
+      expect(tsk1.addDep(mock.dep2Fn, 0)).toEqual(tsk1);
     });
 /*
   it("Sequence.run()", function() {
@@ -92,12 +92,12 @@ describe("Sequence", function() {
     dep.tsk.args = ["second"];
     var seq = new Sequence();
     tsk1 = seq.addTask(mock.tsk1Fn);
-    tsk1.addDependency(dep.fn, 0);
+    tsk1.addDep(dep.fn, 0);
     expect(tsk1.dependencies[0]).toBe(dep.fn);
     expect(tsk1.dependencies.length).toBe(1);
     tsk2 = seq.addTask(mock.tsk2Fn);
     expect(dep.tsk.constructor).toBe(Sequence.Task);
-    tsk2.addDependency(dep.tsk, 0);
+    tsk2.addDep(dep.tsk, 0);
     expect(tsk2.dependencies[0]).toEqual(jasmine.any(Function));
     expect(tsk2.dependencies.length).toBe(1);
     seq.addTask(function(a){return a},"DONE");
