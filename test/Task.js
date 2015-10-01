@@ -1,7 +1,9 @@
+"use strict";
+
 var Task = require("../src/Task.js");
 
 // basic testing
-describe("Task()", function() {
+describe("basic Task() abilities,", function() {
   var fn = function story() {
     var plot = "";
     [].slice.call(arguments).forEach(function(part) {
@@ -41,6 +43,10 @@ describe("Task()", function() {
     expect(tsk.addDep).toThrow();
   });
 
+  it ("throws on bad index, i.e. too large or duplicate", function() {
+    // ...FILL IN HEEERRRE
+  });
+
   describe("runs via `execute()`", function() {
     it("without async dependencies", function() {
       var res;
@@ -56,63 +62,77 @@ describe("Task()", function() {
   describe("removeDep()", function() {
     it("removes dep and returns them", function() {
       var dep = function d3(){void 0}, set = "final", index = 3;
-      tsk.addDep(dep, index, set);
+      var id = tsk.addDep(dep, index, set);
 
       expect(tsk.sets.final[2].actual).toBe(dep);
-      expect(tsk.removeDep(set, index, dep)).toBe(dep);
+      expect(tsk.removeDep(id)).toBe(dep);
     });
   });
 });
 
 // sets and final args order, extensive tests
-describe("Task()", function() {
-  function d1(){return "d1"}
-  function d2(){return "d2"}
-  function i1(){return "i1"}
-  function f1(){return "f1"}
+describe("extended Task() abilities", function() {
+  var t1, t2, tsk, expArgs;
 
-  it("order args in natural set order", function() {
-    var res, tsk = new Task(function() {
-      expect([].slice.call(arguments)).toEqual(["f1", "p1", "i1", "t1", "t2",
-      "d1", "d2"]);
-    }, ["t1", "t2"]),
-        sets = tsk.sets;
+  function d1f(){return "d1"}
+  function d2f(){return "d2"}
+  function i1f(){return "i1"}
+  function f1f(){return "f1"}
+
+  function setup() {
+    tsk = new Task(function() {
+      expect([].slice.call(arguments)).toEqual(expArgs);
+    }, [t1 || "t1", t2 || "t2"]);
+
+    tsk.addDep(d1f);
+    tsk.addDep(d2f);
+    tsk.addDep(i1f, "internal");
+    tsk.addDep(f1f, "final");
+  }
+
+  beforeEach(setup);
+
+  it("ordered args in natural set order", function() {
+    var sets = tsk.sets;
 
     expect(sets.task.length).toEqual(2);
-    tsk.addDep(d1);
-    tsk.addDep(d2);
     expect(sets.dep.length).toEqual(2);
-    tsk.addDep(i1, "internal");
     expect(sets.internal.length).toEqual(1);
-    tsk.addDep(f1, "final");
-    res = tsk.execute("p1");
-
-    it ("throws on bad index, i.e. too large or duplicate", function() {
-      // ...FILL IN HEEERRRE
-    })
+    expArgs = ["f1", "p1", "i1", "t1", "t2", "d1", "d2"];
+    tsk.execute("p1");
   });
 
-  it ("natural set order", function() {
-    var expRes, tsk = new Task(function() {
-      expect([].slice.call(arguments)).toEqual(expRes);
-      }, ["t1", "t2"]),
-      sets = tsk.sets;
+  it ("forced `index`on d1", function() {
+    var id;
 
-    expect(sets.task.length).toEqual(2);
-    tsk.addDep(d1);
-    tsk.addDep(d2);
-    expect(sets.dep.length).toEqual(2);
-    tsk.addDep(i1, "internal");
-    expect(sets.internal.length).toEqual(1);
-    tsk.addDep(f1, "final");
+    function d3f(){return "d3"};
+    id = tsk.addDep(d3f, 0);
+    expect(tsk.sets.dep.length).toEqual(3);
+    expArgs = ["f1", "p1", "i1", "t1", "t2", "d3", "d1", "d2"];
+    tsk.execute("p1");
+    expect(tsk.removeDep(id)).toBe(d3f);
+  });
 
-    it ("with forced `index`on d1", function() {
-      var set = "dep", index = null, dep;
-      expRes = ["f1", "p1", "i1", "t1", "t2", "d2", "d1"];
-      dep = tsk.removeDep(set, index, d1);
-      expect(dep).toBe(d1);
-      tsk.addDep(d1, 1);
-      tsk.execute("p1");
-    });
+  it ("forced `index` on i1", function() {
+    var id;
+
+    expArgs = ["f1", "p1", "t1", "t2", "d1", "i1", "d2"];
+    // HACK
+    id = tsk.sets.internal[0].id;
+    expect(tsk.removeDep(id)).toBe(i1f);
+    tsk.addDep(i1f, 1, "dep");
+    tsk.execute("p1");
+  });
+
+  it ("moveDep()", function() {
+    var id;
+    function t1_5f (){return "t1.5"}
+    expArgs = ["f1", "p1", "i1", "t1", "t1.5", "t2", "d1", "d2"];
+    id = tsk.addDep(t1_5f, 1, "task");
+    tsk.execute("p1");
+    expArgs = ["f1", "p1", "i1", "t1", "t2", "t1.5", "d1", "d2"];
+    expect(tsk.moveDep(id, 5, "final")).not.toEqual(id);
+    tsk.execute("p1");
+    expect(tsk.moveDep(-4, 5)).toEqual(jasmine.any(Object));
   });
 });
