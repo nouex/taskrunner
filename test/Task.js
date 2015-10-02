@@ -1,9 +1,11 @@
 "use strict";
 
 var Task = require("../src/Task.js");
+var AsyncTask = require("../src/AsyncTask.js");
+var tool = require("../src/tool.js");
 
 // basic testing
-describe("basic Task() abilities,", function() {
+describe("Task(),", function() {
   var fn = function story() {
     var plot = "";
     [].slice.call(arguments).forEach(function(part) {
@@ -13,7 +15,7 @@ describe("basic Task() abilities,", function() {
   };
 
   var tsk = new Task(fn, ["invisible", "man"]);
-  // spies
+  // spies`
   beforeEach(function() {
     spyOn(tsk, "addDep").and.callThrough();
     spyOn(tsk, "execute").and.callThrough();
@@ -71,7 +73,7 @@ describe("basic Task() abilities,", function() {
 });
 
 // sets and final args order, extensive tests
-describe("extended Task() abilities", function() {
+describe("Task()", function() {
   var t1, t2, tsk, expArgs;
 
   function d1f(){return "d1"}
@@ -92,36 +94,38 @@ describe("extended Task() abilities", function() {
 
   beforeEach(setup);
 
-  it("ordered args in natural set order", function() {
-    var sets = tsk.sets;
+  describe("arg order", function() {
+    it("ordered args in natural set order", function() {
+      var sets = tsk.sets;
 
-    expect(sets.task.length).toEqual(2);
-    expect(sets.dep.length).toEqual(2);
-    expect(sets.internal.length).toEqual(1);
-    expArgs = ["f1", "p1", "i1", "t1", "t2", "d1", "d2"];
-    tsk.execute("p1");
-  });
+      expect(sets.task.length).toEqual(2);
+      expect(sets.dep.length).toEqual(2);
+      expect(sets.internal.length).toEqual(1);
+      expArgs = ["f1", "p1", "i1", "t1", "t2", "d1", "d2"];
+      tsk.execute("p1");
+    });
 
-  it ("forced `index`on d1", function() {
-    var id;
+    it ("forced `index`on d1", function() {
+      var id;
 
-    function d3f(){return "d3"};
-    id = tsk.addDep(d3f, 0);
-    expect(tsk.sets.dep.length).toEqual(3);
-    expArgs = ["f1", "p1", "i1", "t1", "t2", "d3", "d1", "d2"];
-    tsk.execute("p1");
-    expect(tsk.removeDep(id)).toBe(d3f);
-  });
+      function d3f(){return "d3"};
+      id = tsk.addDep(d3f, 0);
+      expect(tsk.sets.dep.length).toEqual(3);
+      expArgs = ["f1", "p1", "i1", "t1", "t2", "d3", "d1", "d2"];
+      tsk.execute("p1");
+      expect(tsk.removeDep(id)).toBe(d3f);
+    });
 
-  it ("forced `index` on i1", function() {
-    var id;
+    it ("forced `index` on i1", function() {
+      var id;
 
-    expArgs = ["f1", "p1", "t1", "t2", "d1", "i1", "d2"];
-    // HACK
-    id = tsk.sets.internal[0].id;
-    expect(tsk.removeDep(id)).toBe(i1f);
-    tsk.addDep(i1f, 1, "dep");
-    tsk.execute("p1");
+      expArgs = ["f1", "p1", "t1", "t2", "d1", "i1", "d2"];
+      // HACK
+      id = tsk.sets.internal[0].id;
+      expect(tsk.removeDep(id)).toBe(i1f);
+      tsk.addDep(i1f, 1, "dep");
+      tsk.execute("p1");
+    });
   });
 
   it ("moveDep()", function() {
@@ -134,5 +138,33 @@ describe("extended Task() abilities", function() {
     expect(tsk.moveDep(id, 5, "final")).not.toEqual(id);
     tsk.execute("p1");
     expect(tsk.moveDep(-4, 5)).toEqual(jasmine.any(Object));
+  });
+
+  describe("_mayExecute()", function() {
+    it ("with no asyncTsks via itself", function () {
+      var res = tsk._mayExecute();
+      expect(res).toBe(true);
+    });
+
+    it ("with asyncTsk's via itself", function() {
+      var atsk = new AsyncTask(function(){return "atsk1"}, []);
+      var cb = atsk.getCb();
+
+      tsk.addDep(atsk);
+      tsk.addDep(function(){return "blah"});
+      expect(tool.isAsyncTask(tsk._mayExecute())).toBe(true);
+    });
+
+    it ("with asyncTsks via execute()", function() {
+          expArgs = ["f1", "p1", "i1", "t1", "t2", "d1", "d2"];
+          var atsk = new AsyncTask(function(){return "atsk1"}, []);
+          expect(tsk.execute("p1")).not.toBe(Task.EXECUTION_DELAYED);
+          tsk.addDep(atsk);
+          expect(tsk.execute()).toBe(Task.EXECUTION_DELAYED);
+    });
+  });
+  // full out execute
+  describe("execute()", function() {
+
   });
 });
