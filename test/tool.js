@@ -1,6 +1,6 @@
 "use strict";
 
-var tool = require("../src/tool.js");
+var tool = require("../lib/tool.js");
 
 describe("deepCpy()", function() {
   it ("copies own enum & deep", function() {
