@@ -15,3 +15,4 @@
 * SPEED up _mayExecute() by having own instance flags indicating the lasst
 *  update and whether there are any unexecuted asyncs
 * TEST for the adde opts param and whatever it affects (unstable for now)
+* TEST for index.js
