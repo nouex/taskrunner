@@ -3,6 +3,11 @@
 var Task = require("../src/Task.js");
 var AsyncTask = require("../src/AsyncTask.js");
 var tool = require("../src/tool.js");
+var common = require("../src/common.js");
+
+var signals = common.signals;
+var EXECUTION_DELAYED = signals.EXECUTION_DELAYED;
+var ID_UNRESOLVED = signals.ID_UNRESOLVED;
 
 // basic testing
 describe("Task(),", function() {
@@ -152,19 +157,55 @@ describe("Task()", function() {
 
       tsk.addDep(atsk);
       tsk.addDep(function(){return "blah"});
-      expect(tool.isAsyncTask(tsk._mayExecute())).toBe(true);
+      expect(common.isAsyncTask(tsk._mayExecute())).toBe(true);
     });
 
     it ("with asyncTsks via execute()", function() {
           expArgs = ["f1", "p1", "i1", "t1", "t2", "d1", "d2"];
           var atsk = new AsyncTask(function(){return "atsk1"}, []);
-          expect(tsk.execute("p1")).not.toBe(Task.EXECUTION_DELAYED);
+          expect(tsk.execute("p1")).not.toBe(EXECUTION_DELAYED);
           tsk.addDep(atsk);
-          expect(tsk.execute()).toBe(Task.EXECUTION_DELAYED);
+          expect(tsk.execute()).toBe(EXECUTION_DELAYED);
     });
   });
-  // full out execute
-  describe("execute()", function() {
 
+  describe("execute()", function() {
+    it("gathers args, and passes to fn", function() {
+      var task = new Task(fn, [" blue", " moon"]);
+      task.addDep(function(){return " in"}, 0, "task");
+      task.addDep(function() {return " a"}, 1, "task");
+      expect(task.execute("Once")).toEqual("Once in a blue moon");
+
+      function fn(once, inn, a, blue, moon) {
+        return once + inn + a + blue + moon;
+      }
+    });
+
+    describe("aEC", function() {
+      it ("catches an asynchronous return", function() {
+        var task;
+        var atask = new AsyncTask(afn, []);
+        var mocks = {};
+        var expThing;
+
+        mocks.fn = fn;
+        spyOn(mocks, "fn").and.callThrough();
+        task = new Task(mocks.fn, []);
+
+        task.addDep(atask);
+        expect(task.execute(expThing = "petty")).toBe(EXECUTION_DELAYED);
+        expect(mocks.fn.calls.count()).toBe(0);
+        atask.getCb()();
+        expect(mocks.fn.calls.count()).toBe(1);
+
+        function afn() {
+          //...
+        }
+
+        function fn(thing) {
+          expect(thing).toBe(expThing);
+        }
+      });
+    });
   });
 });
