@@ -1,7 +1,7 @@
 "use strict";
 
-var Sequence = require("../src/Sequence.js");
-var common = require("../src/common.js");
+var Sequence = require("../lib/Sequence.js");
+var common = require("../lib/common.js");
 
 var sigs = common.signals;
 var EXECUTION_DELAYED = sigs.EXECUTION_DELAYED;
@@ -96,6 +96,22 @@ describe("Sequence()", function() {
       expect(atsk.getCb()()).not.toBe(EXECUTION_DELAYED);
       expect(isAsyncTask(seq._mayExecute())).not.toBe(true);
       expect(seq._mayExecute()).toBe(true);
+    });
+
+    it ("depends on tasks _mayExecute()", function() {
+      var seq = new Sequence;
+      var tsk1 = seq.addTask(noop);
+      var atsk1 = seq.addAsyncTask(noop);
+      var atsk2 = seq.addAsyncTask(noop);
+      var tsk2 = seq.addTask(noop);
+
+      expect(seq._mayExecute()).toBe(atsk1);
+      atsk1.getCb()();
+      expect(seq._mayExecute()).toBe(atsk2);
+      atsk2.getCb()();
+      expect(seq._mayExecute()).toBe(true);
+
+      function noop(){};
     });
   });
 

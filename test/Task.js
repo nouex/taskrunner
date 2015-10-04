@@ -1,9 +1,9 @@
 "use strict";
 
-var Task = require("../src/Task.js");
-var AsyncTask = require("../src/AsyncTask.js");
-var tool = require("../src/tool.js");
-var common = require("../src/common.js");
+var Task = require("../lib/Task.js");
+var AsyncTask = require("../lib/AsyncTask.js");
+var tool = require("../lib/tool.js");
+var common = require("../lib/common.js");
 
 var signals = common.signals;
 var EXECUTION_DELAYED = signals.EXECUTION_DELAYED;
@@ -166,6 +166,44 @@ describe("Task()", function() {
           expect(tsk.execute("p1")).not.toBe(EXECUTION_DELAYED);
           tsk.addDep(atsk);
           expect(tsk.execute()).toBe(EXECUTION_DELAYED);
+    });
+
+    it ("depends on deps' _mayExecute()", function () {
+      var atsk1 = new AsyncTask(noop, []);
+      var atsk2 = new AsyncTask(noop, []);
+      var atsk3 = new AsyncTask(noop, []);
+      var atsk4 = new AsyncTask(noop, []);
+      var tsk = new Task(noop, []);
+      var tsk1 = new Task(noop, []);
+      var tsk2 = new Task(noop, []);
+
+      tsk2.addDep(atsk2);
+      atsk3.addDep(atsk4);
+
+      tsk.addDep(tsk1);
+      tsk.addDep(atsk1);
+      tsk.addDep(noop);
+      tsk.addDep(tsk2);
+      tsk.addDep(atsk3);
+
+      expect(tsk._mayExecute()).toBe(atsk1);
+      atsk1.getCb()();
+      // next to block execution: atsk2 of tsk2
+      expect(tsk._mayExecute()).toBe(atsk2);
+      atsk2.getCb()();
+      // next to block: atsk3
+      expect(tsk._mayExecute()).toBe(atsk3)
+      // does not exec bc of non exec dep: atsk4
+      atsk3.getCb()();
+      expect(atsk3._mayExecute()).toBe(atsk4)
+      // so next is still: atsk3
+      expect(tsk._mayExecute()).toBe(atsk3);
+      // not exec the last dep atsk4
+      atsk4.getCb()();
+      // should be no more blocks
+      expect(tsk._mayExecute()).toBe(true);
+
+      function noop(){};
     });
   });
 
