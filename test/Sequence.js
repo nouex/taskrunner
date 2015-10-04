@@ -32,24 +32,16 @@ describe("Sequence()", function() {
       expect(seq._addTask("blah", false)).toBeUndefined();
     });
 
-    it("uses `taskDefAEC` if it is an AEC", function() {
-      var tsk1, tsk2, newTaskDefAEC;
-      tsk1 = seq._addTask(Function, false, Function);
-      expect(tsk1.defAEC).toBe(seq.taskDefAEC);
-      tsk2 = seq._addTask(Function, false, newTaskDefAEC = labAEC(Function));
-      expect(tsk2.defAEC).toBe(newTaskDefAEC);
-    });
-
     it("determines user inputed args correctly", function () {
       var tsk1, tsk2, set;
       // with taskDefAEC
-      tsk1 = seq._addTask(Function, false, labAEC(Function), "arg1", "arg2");
+      tsk1=seq._addTask(Function,false,{defAEC: labAEC(Function)},"arg1","arg2");
       set = tsk1.sets.task;
       expect(set[0].actual).toBe("arg1");
       expect(set[1].actual).toBe("arg2");
       expect(set.length).toBe(2);
       // without taskDefAEC
-      tsk2 = seq._addTask(Function, false, function(){}, "arg2");
+      tsk2 = seq._addTask(Function, false, {}, function(){}, "arg2");
       set = tsk2.sets.task;
       expect(set[0].actual).toEqual(jasmine.any(Function));
       expect(set[1].actual).toEqual("arg2");
