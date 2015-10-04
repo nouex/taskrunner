@@ -219,6 +219,42 @@ describe("Task()", function() {
       }
     });
 
+    describe("opts:autoRetry", function() {
+      it ("auto retry's when async is completed", function () {
+        var assertMe = 0;
+        var tsk = new Task(function(){assertMe++}, [], {autoRetry: true});
+        var atsk = new AsyncTask(function NOP(){}, []);
+        tsk.addDep(atsk);
+        expect(tsk.execute()).toBe(EXECUTION_DELAYED);
+        expect(assertMe).toBe(0)
+        atsk.getCb()();
+        expect(assertMe).toBe(1);
+      });
+      it ("has autRetry set to default true", function() {
+        var assertMe = 0;
+        var tsk = new Task(function(){assertMe++}, []);
+        var atsk = new AsyncTask(function NOP(){}, []);
+        tsk.addDep(atsk);
+        expect(tsk.execute()).toBe(EXECUTION_DELAYED);
+        expect(assertMe).toBe(0)
+        atsk.getCb()();
+        expect(assertMe).toBe(1);
+      });
+
+      it ("does not reTry when opts:autoRetry is off", function() {
+        var assertMe = 0;
+        var tsk = new Task(function(){assertMe++}, [], {autoRetry: false});
+        var atsk = new AsyncTask(function NOP(){}, []);
+        tsk.addDep(atsk);
+        expect(tsk.execute()).toBe(EXECUTION_DELAYED);
+        expect(assertMe).toBe(0)
+        atsk.getCb()();
+        expect(assertMe).toBe(0);
+        tsk.execute();
+        expect(assertMe).toBe(1);
+      });
+    });
+
     describe("aEC", function() {
       it ("catches an asynchronous return", function() {
         var task;
