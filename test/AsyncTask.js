@@ -2,9 +2,9 @@
 
 var EE = require("events");
 
-var AsyncTask = require("../src/AsyncTask.js");
-var Task = require("../src/Task.js");
-var common = require("../src/common.js");
+var AsyncTask = require("../lib/AsyncTask.js");
+var Task = require("../lib/Task.js");
+var common = require("../lib/common.js");
 
 var sigs = common.signals;
 var EXECUTION_DELAYED = sigs.EXECUTION_DELAYED;
