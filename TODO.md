@@ -10,3 +10,7 @@
 * have a dep module with Dependency being the constructor and abstracting
 *   dependency interaction to a single point such as execute() with task instead
 *   of having to check for an fn or task or sequence ...
+* TEST in src/Task.js if chaning i to --i in traverseSet() after splicing works
+*   as expected, i.e. correctly
+* SPEED up _mayExecute() by having own instance flags indicating the lasst
+*  update and whether there are any unexecuted asyncs
