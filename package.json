@@ -1,0 +1,27 @@
+{
+  "name": "taskrunner",
+  "version": "1.0.0",
+  "description": "A taskrunner with horizontal and vertical execution.",
+  "main": "index.js",
+  "directories": {
+    "example": "example",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reecehudson/taskrunner.git"
+  },
+  "keywords": [
+    "taskrunner",
+    "tasks"
+  ],
+  "author": "Reece Hudson <reecehudson10@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/reecehudson/taskrunner/issues"
+  },
+  "homepage": "https://github.com/reecehudson/taskrunner#readme"
+}
