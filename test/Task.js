@@ -158,6 +158,8 @@ describe("Task()", function() {
       tsk.addDep(atsk);
       tsk.addDep(function(){return "blah"});
       expect(common.isAsyncTask(tsk._mayExecute())).toBe(true);
+      cb();
+      expect(tsk._mayExecute()).toBe(true);
     });
 
     it ("with asyncTsks via execute()", function() {
