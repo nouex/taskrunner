@@ -9,6 +9,7 @@ var common = require("../lib/common.js");
 var sigs = common.signals;
 var EXECUTION_DELAYED = sigs.EXECUTION_DELAYED;
 var ASYNC_NOT_EXECUTED = sigs.ASYNC_NOT_EXECUTED;
+var ASYNC_RESULT_INIT = sigs.ASYNC_RESULT_INIT;
 
 var isAsyncTask = common.isAsyncTask;
 
@@ -161,9 +162,12 @@ describe("AsyncTask()", function() {
         expect(atsk.getResult.calls.count()).toBe(0);
         expect(atsk.getResult()).toBe(ASYNC_NOT_EXECUTED);
         expect(atsk.getResult.calls.count()).toBe(1)
+        expect(atsk.result).toBe(ASYNC_RESULT_INIT);
         atskDepExec();// which should secretly invoke `tryAgain()`-->
         // for some jasmine reason the below is failing
         // expect(atsk.getResult.calls.count()).toBe(2);
+        expect(atsk.result).not.toBe(ASYNC_NOT_EXECUTED);
+        expect(atsk.getResult()).not.toBe(ASYNC_NOT_EXECUTED);
         expect(c.aEC.calls.count()).toBe(1);
       });
     });
