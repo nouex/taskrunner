@@ -185,4 +185,51 @@ describe("Sequence()", function() {
       });
     });
   });
+
+  describe ("opts", function () {
+    it ("defAEC", function () {
+          var aec = function (res) {
+              expect(res).toEqual(aRet);
+          },
+          opts = {
+            defAEC: aec
+          }, seq, atsk, aRet, tsk;
+
+          seq = new Sequence(opts);
+          tsk = seq.addTask(function(){return "fine"});
+          // without async mode
+          expect(seq.run()).toBe("fine");
+          // with async mode
+          atsk = seq.addAsyncTask(function(){return aRet});
+          aRet = "12:44PM";
+          expect(seq.run()).toBe(EXECUTION_DELAYED);
+          atsk.getCb()();
+          // since we only have one task and it is the lst on the ret will be:
+          expect(seq.run()).toEqual(aRet);
+    });
+
+    it ("autoRetry", function () {
+          // mocked async execution catcher
+          var aec = jasmine.createSpy("aec"),
+              NOP = function () {},
+              seq1, seq2, atsk1, atsk2;
+
+          // autoRetry = true
+          seq1 = new Sequence({autoRetry: true, defAEC: aec});
+          atsk1 = seq1.addAsyncTask(NOP);
+          // autoRetyr = false
+          seq2 = new Sequence({autoRetry: false, defAEC: aec});
+          atsk2 = seq2.addAsyncTask(NOP);
+
+          seq1.run();
+          expect(aec).not.toHaveBeenCalled();
+          atsk1.getCb()();
+          expect(aec).toHaveBeenCalled();
+
+          seq2.run();
+          expect(aec.calls.count()).toEqual(1);
+          atsk2.getCb()();
+          expect(aec.calls.count()).toEqual(1);
+    });
+  });
 });

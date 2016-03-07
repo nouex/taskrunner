@@ -80,12 +80,16 @@ describe("Task(),", function() {
 describe("Task()", function() {
   var t1, t2, tsk, expArgs;
 
+  // set dep
   function d1f(){return "d1"}
   function d2f(){return "d2"}
+  // set internal
   function i1f(){return "i1"}
+  // set final
   function f1f(){return "f1"}
 
   function setup() {
+    // t1, t2 of set task
     tsk = new Task(function() {
       expect([].slice.call(arguments)).toEqual(expArgs);
     }, [t1 || "t1", t2 || "t2"]);
@@ -98,7 +102,12 @@ describe("Task()", function() {
 
   beforeEach(setup);
 
-  describe("arg order", function() {
+  describe("arg order (sets)", function() {
+    /**
+    * Sets In Order of Dominance
+    * internal = (task, dep)
+    * final = (passed, internal)
+    */
     it("ordered args in natural set order", function() {
       var sets = tsk.sets;
 
@@ -109,7 +118,7 @@ describe("Task()", function() {
       tsk.execute("p1");
     });
 
-    it ("forced `index`on d1", function() {
+    it ("addDep() index=0, set=dep", function() {
       var id;
 
       function d3f(){return "d3"};
@@ -118,9 +127,11 @@ describe("Task()", function() {
       expArgs = ["f1", "p1", "i1", "t1", "t2", "d3", "d1", "d2"];
       tsk.execute("p1");
       expect(tsk.removeDep(id)).toBe(d3f);
+      expArgs = ["f1", "p1", "i1", "t1", "t2", "d1", "d2"];
+      tsk.execute("p1");
     });
 
-    it ("forced `index` on i1", function() {
+    it ("addDep() index=1, set=dep", function() {
       var id;
 
       expArgs = ["f1", "p1", "t1", "t2", "d1", "i1", "d2"];
@@ -129,6 +140,58 @@ describe("Task()", function() {
       expect(tsk.removeDep(id)).toBe(i1f);
       tsk.addDep(i1f, 1, "dep");
       tsk.execute("p1");
+    });
+
+    it ("addDep() index=0, set=final", function () {
+      expArgs = ["f0", "f1", "p1", "i1", "t1", "t2", "d1", "d2"];
+      tsk.addDep(function () {return "f0"}, 0, "final");
+      tsk.execute("p1");
+    });
+
+    it ("addDep() index=5, set=final", function () {
+      expArgs = ["f1", "p1", "i1", "t1", "t2", "f5", "d1", "d2"]
+      tsk.addDep(function () {return "f5"}, 5, "final");
+      tsk.execute("p1");
+    });
+
+    it ("addDep()x2 index = 0, 2; set=passed", function () {
+      expArgs = ["f1", "p0.5", "p1", "p2", "i1", "t1", "t2", "d1", "d2"];
+      tsk.addDep(function () {
+        return "p0.5";
+      }, 0, "passed");
+      tsk.addDep(function () {
+        return "p2";
+      }, 2, "passed");
+      tsk.execute("p1");
+    });
+
+    it ("addDep() index=2, set=internal", function () {
+      expArgs = ["f1", "p1", "i1", "t1", "i3", "t2", "d1", "d2"];
+      tsk.addDep(function () {return "i3"}, 2, "internal");
+      tsk.execute("p1");
+    });
+
+    it ("addDep()x3 index=..., set=task", function () {
+      expArgs = ["f1", "p1", "i1", "t1", "t1.5", "t2", "d1", "d2"];
+      tsk.addDep(function (){return "t1.5"}, 1, "task");
+      tsk.execute("p1");
+
+      expArgs = ["f1", "p1", "i1", "t1", "t1.5", "t1.8", "t2", "d1", "d2"];
+      tsk.addDep(function () {return "t1.8"}, 2, "task");
+      tsk.execute("p1");
+
+      expArgs = ["f1", "p1", "i1", "t0", "t1.5", "t1.8", "t1", "t2", "d1", "d2"];
+      tsk.addDep(function() {return "t0"}, 0, "task");
+      tsk.execute("p1");
+    });
+
+    it ("addDep() with conflicting index", function () {
+      expArgs = ["f1", "p1", "i1", "t1", "t2", "d1", "d2"];
+      tsk.addDep(function (){}, 0, "internal");
+      tsk.addDep(function (){}, 0, "internal");
+      expect(function () {
+        tsk.execute("p1");
+      }).toThrowError(/index/);
     });
   });
 
@@ -220,39 +283,57 @@ describe("Task()", function() {
       }
     });
 
-    describe("opts:autoRetry", function() {
-      it ("auto retry's when async is completed", function () {
-        var assertMe = 0;
-        var tsk = new Task(function(){assertMe++}, [], {autoRetry: true});
-        var atsk = new AsyncTask(function NOP(){}, []);
-        tsk.addDep(atsk);
-        expect(tsk.execute()).toBe(EXECUTION_DELAYED);
-        expect(assertMe).toBe(0)
-        atsk.getCb()();
-        expect(assertMe).toBe(1);
-      });
-      it ("has autRetry set to default true", function() {
-        var assertMe = 0;
-        var tsk = new Task(function(){assertMe++}, []);
-        var atsk = new AsyncTask(function NOP(){}, []);
-        tsk.addDep(atsk);
-        expect(tsk.execute()).toBe(EXECUTION_DELAYED);
-        expect(assertMe).toBe(0)
-        atsk.getCb()();
-        expect(assertMe).toBe(1);
-      });
+    describe("opts", function() {
+      describe ("autoRetry", function () {
+        it ("auto retry's when async is completed", function () {
+          var assertMe = 0;
+          var tsk = new Task(function(){assertMe++}, [], {autoRetry: true});
+          var atsk = new AsyncTask(function NOP(){}, []);
+          tsk.addDep(atsk);
+          expect(tsk.execute()).toBe(EXECUTION_DELAYED);
+          expect(assertMe).toBe(0)
+          atsk.getCb()();
+          expect(assertMe).toBe(1);
+        });
+        it ("has autRetry set to default true", function() {
+          var assertMe = 0;
+          var tsk = new Task(function(){assertMe++}, []);
+          var atsk = new AsyncTask(function NOP(){}, []);
+          tsk.addDep(atsk);
+          expect(tsk.execute()).toBe(EXECUTION_DELAYED);
+          expect(assertMe).toBe(0)
+          atsk.getCb()();
+          expect(assertMe).toBe(1);
+        });
 
-      it ("does not reTry when opts:autoRetry is off", function() {
-        var assertMe = 0;
-        var tsk = new Task(function(){assertMe++}, [], {autoRetry: false});
-        var atsk = new AsyncTask(function NOP(){}, []);
-        tsk.addDep(atsk);
-        expect(tsk.execute()).toBe(EXECUTION_DELAYED);
-        expect(assertMe).toBe(0)
-        atsk.getCb()();
-        expect(assertMe).toBe(0);
-        tsk.execute();
-        expect(assertMe).toBe(1);
+        it ("does not reTry when opts:autoRetry is off", function() {
+          var assertMe = 0;
+          var tsk = new Task(function(){assertMe++}, [], {autoRetry: false});
+          var atsk = new AsyncTask(function NOP(){}, []);
+          tsk.addDep(atsk);
+          expect(tsk.execute()).toBe(EXECUTION_DELAYED);
+          expect(assertMe).toBe(0)
+          atsk.getCb()();
+          expect(assertMe).toBe(0);
+          tsk.execute();
+          expect(assertMe).toBe(1);
+        });
+      });
+      describe ("defAEC", function () {
+        it ("works", function () {
+          var ret1 = "a$ap mob", ret2 = "10";
+          var AEC = common.labAEC(function(result){
+            expect(result).toEqual(ret1+ret2);
+          });
+          var tsk = new Task(function (){return ret1 + arguments[0]}, [], {
+            defAEC: AEC,
+            autoRetry: true
+          });
+          var atsk = new AsyncTask(function(){return ret2}, [], {});
+          tsk.addDep(atsk);
+          expect(tsk.execute()).toBe(EXECUTION_DELAYED);
+          atsk.getCb()();
+        });
       });
     });
 
