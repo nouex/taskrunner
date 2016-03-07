@@ -7,7 +7,6 @@ var common = require("../lib/common.js");
 
 var signals = common.signals;
 var EXECUTION_DELAYED = signals.EXECUTION_DELAYED;
-var ID_UNRESOLVED = signals.ID_UNRESOLVED;
 
 // basic testing
 describe("Task(),", function() {
