@@ -142,3 +142,5 @@ Signals can be accessed by `require("taskrunner").signals`.  Signals are can be
 thought of placeholders or types that have specific significance.  Say, instead
 of returning null in a function and surmising that an 'id' wasn't found, we use
 signals to specifically know the reason.
+
+TODO: add a friendly graphic depecting a bad ass sequence flow
