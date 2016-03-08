@@ -32,3 +32,5 @@ exports.mkAsyncTask = function(fn, opts) {
 
   return new A(fn, args, opts);
 };
+
+exports.signals = require("./lib/common.js").signals;
