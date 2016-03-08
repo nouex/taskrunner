@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "jasmine test/*"
+    "test": "node_modules/jasmine/bin/jasmine.js test/*"
   },
   "repository": {
     "type": "git",
