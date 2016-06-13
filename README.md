@@ -1,3 +1,4 @@
+![build status badge](https://travis-ci.org/reecehudson/taskrunner.svg "build status image")
 # Taskrunner #
 ***
 ## API ##
